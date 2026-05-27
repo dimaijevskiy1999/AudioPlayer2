@@ -17,17 +17,17 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # Створюємо Gradle Wrapper 8.4 в ізольованій папці без перевірки Android-файлів
+      # Створюємо Gradle Wrapper 8.4 у системній папці /tmp, де немає жодних Android-файлів
       - name: Force Create Local Gradle Wrapper
         run: |
-          mkdir temp_gradle
-          cd temp_gradle
+          mkdir /tmp/wrapper_generation
+          cd /tmp/wrapper_generation
           gradle wrapper --gradle-version 8.4 --distribution-type bin
-          cd ..
-          cp temp_gradle/gradlew .
-          cp -r temp_gradle/gradle .
+          cd $GITHUB_WORKSPACE
+          cp /tmp/wrapper_generation/gradlew .
+          cp -r /tmp/wrapper_generation/gradle .
           chmod +x gradlew
-          rm -rf temp_gradle
+          rm -rf /tmp/wrapper_generation
 
       - name: Build with Gradle
         run: ./gradlew assembleDebug
