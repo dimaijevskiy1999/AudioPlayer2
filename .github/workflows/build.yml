@@ -16,18 +16,18 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Тотальне випалювання будь-яких копій маніфесту у всіх папках проєкту
+      # Полное уничтожение любых фантомных манифестов в репозитории
       - name: Annihilate Duplicate Manifests
         run: |
           find . -name "AndroidManifest.xml" -exec rm -f {} +
           mkdir -p app/src/main
 
-      # Запис єдиного чистого бінарного файлу без використання текстових редакторів
+      # Запись кристально чистого официального маніфесту
       - name: Create Single Perfect Manifest
         run: |
           printf '%s\n' \
           '<?xml version="1.0" encoding="utf-8"?>' \
-          '<manifest xmlns:android="http://github.com">' \
+          '<manifest xmlns:android="http://android.com">' \
           '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />' \
           '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />' \
           '    <application android:allowBackup="true" android:label="AudioPlayer" android:supportsRtl="true" android:theme="@android:style/Theme.Material.NoActionBar">' \
@@ -45,7 +45,8 @@ jobs:
           '    </application>' \
           '</manifest>' > app/src/main/AndroidManifest.xml
 
-       Tar: Setup Gradle
+      # ИСПРАВЛЕНО: Правильное название шага для возвращения кнопки
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.4'
