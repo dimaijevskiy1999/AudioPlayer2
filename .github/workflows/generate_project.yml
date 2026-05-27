@@ -18,7 +18,9 @@ jobs:
         run: |
           import os
           import re
+          import urllib.request
 
+          # 1. Читаем README.md и создаем файлы кода
           with open("README.md", "r", encoding="utf-8") as f:
               text = f.read()
 
@@ -43,16 +45,23 @@ jobs:
               with open(full_path, "w", encoding="utf-8") as out_f:
                   out_f.write(code + "\n")
 
-      - name: Download Gradle Wrapper Script
-        run: |
-          mkdir -p gradle/wrapper
-          curl -sL "https://githubusercontent.com" -o gradlew
-          chmod +x gradlew
+          # 2. Скачиваем скрипт gradlew силами Python без использования curl
+          os.makedirs("gradle/wrapper", exist_ok=True)
+          gradlew_url = "https://githubusercontent.com"
+          try:
+              with urllib.request.urlopen(gradlew_url) as response:
+                  gradlew_code = response.read().decode('utf-8')
+              with open("gradlew", "w", encoding="utf-8", newline='\n') as f:
+                  f.write(gradlew_code)
+              print("Файл gradlew успешно скачан через Python.")
+          except Exception as e:
+              print(f"Не удалось скачать gradlew: {e}")
 
       - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@://github.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          chmod +x gradlew || true
           git add .
-          git commit -m "Автоматична генерація структури проекту" || exit 0
+          git commit -m "Автоматическая генерация структуры проекта" || exit 0
           git push origin main
