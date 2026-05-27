@@ -26,9 +26,11 @@ fun PlayerScreen(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         permissionGranted = isGranted
+        if (isGranted) {
+            viewModel.loadAudioFiles()
+        }
     }
 
-    // Запрашиваем разрешение при старте
     LaunchedEffect(Unit) {
         val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_AUDIO
@@ -38,9 +40,17 @@ fun PlayerScreen(
         permissionLauncher.launch(permission)
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    LaunchedEffect(permissionGranted) {
+        if (permissionGranted && uiState.audioFiles.isEmpty()) {
+            viewModel.loadAudioFiles()
+        }
+    }
 
-        // Заголовок
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding() 
+    ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = Color(0xFF1A1A1A)
@@ -53,7 +63,6 @@ fun PlayerScreen(
             )
         }
 
-        // Контент
         if (!permissionGranted) {
             Box(
                 modifier = Modifier
@@ -91,14 +100,16 @@ fun PlayerScreen(
             }
         }
 
-        // Панель управления
         PlayerControls(
             state = uiState,
             onPlayPause = { viewModel.togglePlayPause() },
-            onNext = { viewModel.nextTrack() }
+            onNext = { viewModel.nextTrack() },
+            onPrev = { viewModel.previousTrack() },
+            onSeek = { position -> viewModel.seekTo(position) },
+            onToggleShuffle = { viewModel.toggleShuffle() },
+            onToggleRepeat = { viewModel.toggleRepeat() }
         )
 
-        // Уведомление об ошибке
         if (uiState.error != null) {
             Snackbar(
                 modifier = Modifier.padding(8.dp),
@@ -109,7 +120,7 @@ fun PlayerScreen(
                 },
                 containerColor = Color(0xFF8B0000)
             ) {
-                Text(uiState.error, color = Color.White)
+                Text(uiState.error ?: "", color = Color.White)
             }
         }
     }
