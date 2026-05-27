@@ -18,7 +18,6 @@ android {
 
     buildTypes {
         release {
-            // FIXED: Включена минификация (ProGuard/R8), обфускация и удаление неиспользуемых ресурсов
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -62,7 +61,7 @@ dependencies {
     implementation("androidx.media3:media3-session:1.3.0")
     implementation("androidx.media3:media3-common:1.3.0")
 
-    // Persistence & UI
+    // Persistence & UI Addons
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("io.coil-kt:coil-compose:2.6.0")
 }
