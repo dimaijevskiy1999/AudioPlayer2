@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,9 +27,9 @@ fun TrackList(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Нет доступных аудиофайлов.\nПредоставьте доступ к хранилищу.",
+                text = "Нет доступных аудиофайлов.\nПроверьте папку Music.",
                 color = Color.Gray,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
         }
         return
@@ -38,7 +39,7 @@ fun TrackList(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
     ) {
-        items(files) { file ->
+        items(files, key = { it.id }) { file ->
             val cleanName  = file.name.removeSuffix(".mp3")
             val isSelected = cleanName == currentTrackName
 
