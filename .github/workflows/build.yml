@@ -16,10 +16,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Повне вичищення робочої папки
+      # ПОВНЕ ВИДАЛЕННЯ ТЕСТОВИХ ПАПОК, ДЕ ХОВАЄТЬСЯ ДРУГИЙ ЗЛАМАНИЙ МАНІФЕСТ
       - name: Deep Clean Workspace
         run: |
           rm -rf .gradle app/build buildsettings.gradle.kts build.gradle.kts settings.gradle.kts app/build.gradle.kts app/src/main/AndroidManifest.xml gradle.properties
+          rm -rf app/src/androidTest app/src/test
           rm -rf .github/workflows/generate_project.yml
 
       - name: Force Fix Android Configuration
@@ -73,7 +74,7 @@ jobs:
           }
           EOF
 
-      # АВТОНОМНИЙ ЗАПИС МАНІФЕСТУ ЧЕРЕЗ PYTHON (БЕЗ ІНТЕРНЕТУ ТА БЕЗ КОНФЛІКТІВ СИМВОЛІВ)
+      # ГЕНЕРАЦІЯ ЄДИНОГО СТЕРИЛЬНОГО МАНІФЕСТУ ЧЕРЕЗ PYTHON
       - name: Generate Manifest via Python
         shell: python
         run: |
