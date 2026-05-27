@@ -16,13 +16,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Цей крок повністю переписує поламані конфіги на 100% робочі стабільні стандарти
+      # Цей крок створює конфігурацію БЕЗ Jetifier, щоб сервер не чіпав лапки в маніфестах
       - name: Force Fix Android Configuration
         run: |
-          # Вичищаємо старі файли збірки, де бот наплутав з версіями
           rm -f build.gradle.kts settings.gradle.kts app/build.gradle.kts app/src/main/AndroidManifest.xml gradle.properties
           
-          # 1. Створюємо ідеальний кореневий settings.gradle.kts
+          # 1. Створюємо settings.gradle.kts
           cat << 'EOF' > settings.gradle.kts
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
@@ -38,10 +37,10 @@ jobs:
           }
           EOF
 
-          # 3. Створюємо gradle.properties з підтримкою AndroidX
+          # 3. ВИМИКАЄМО JETIFIER (Він більше не буде ламати атрибути name!)
           cat << 'EOF' > gradle.properties
           android.useAndroidX=true
-          android.enableJetifier=true
+          android.enableJetifier=false
           EOF
 
           # 4. Створюємо внутрішній app/build.gradle.kts
@@ -70,7 +69,7 @@ jobs:
           }
           EOF
 
-          # 5. Створюємо чистий, безпомилковий AndroidManifest.xml
+          # 5. Створюємо чистий AndroidManifest.xml
           mkdir -p app/src/main
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
