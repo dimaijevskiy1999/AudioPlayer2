@@ -16,7 +16,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Примусово створюємо абсолютно чистий, базовий маніфест
+      # Очищення прихованих символів кодування Хрому в усьому проєкті
+      - name: Clean Browser Hidden Characters
+        run: |
+          find . -name "*.xml" -o -name "*.kts" -o -name "*.properties" | xargs sed -i 's/\xc2\xa0/ /g' || true
+
       - name: Force Generate Perfect Manifest
         run: |
           mkdir -p app/src/main
@@ -55,9 +59,8 @@ jobs:
         with:
           gradle-version: '8.4'
 
-      # Запускаємо збірку з жорстким ігноруванням помилок валідації маніфесту бібліотек
       - name: Assemble Debug APK
-        run: gradle assembleDebug -Pandroid.experimental.manifestMerger.ignoreErrors=true -Pandroid.aapt2.nowarn=true
+        run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
