@@ -17,9 +17,14 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # Запускаємо збірку напряму через глобальний gradle сервера, ігноруючи ламаний скрипт
-      - name: Build with Gradle Command
-        run: gradle assembleDebug
+      # Генерируем Gradle Wrapper версии 8.4 напрямую на сервере
+      - name: Force Create Local Gradle Wrapper
+        run: |
+          gradle wrapper --gradle-version 8.4 --distribution-type bin
+          chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew assembleDebug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
