@@ -21,6 +21,9 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          # FIXED: Жесткая фиксация стабильной версии Gradle
+          gradle-version: '8.7'
 
       - name: Build Debug APK
         run: gradle assembleDebug
