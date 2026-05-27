@@ -17,14 +17,9 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # ЭТОТ ШАГ СКАЧАЕТ СВЕЖИЙ GRADLEW НАПРЯМУЮ, ЕСЛИ ЕГО НЕТ
-      - name: Download Gradle Wrapper Script
-        run: |
-          curl -sL "https://githubusercontent.com" -o gradlew
-          chmod +x gradlew
-
-      - name: Build with Gradle
-        run: ./gradlew assembleDebug
+      # Запускаємо збірку напряму через глобальний gradle сервера, ігноруючи ламаний скрипт
+      - name: Build with Gradle Command
+        run: gradle assembleDebug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
