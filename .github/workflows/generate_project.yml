@@ -1,6 +1,6 @@
 name: Generate AudioPlayer Project
 on:
-  workflow_dispatch: # Позволяет запустить генерацию вручную кнопкой
+  workflow_dispatch: # Дозволяє запустити генерацію вручную кнопкой
 
 jobs:
   generate:
@@ -9,33 +9,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create folders and files
+      - name: Generate Files using Python
+        shell: python
         run: |
-          # 1. Создаем структуру папок
-          mkdir -p gradle/wrapper
-          mkdir -p app/src/main/res/values
-          mkdir -p app/src/main/java/com/example/audioplayer/ui/theme
-          mkdir -p app/src/main/java/com/example/audioplayer/ui/components
+          import os
+          import re
 
-          # 2. Скачиваем официальный gradlew
-          curl -sL https://githubusercontent.com -o gradlew
-          chmod +x gradlew
+          # Читаємо ваш README.md
+          with open("README.md", "r", encoding="utf-8") as f:
+              text = f.read()
 
-          # 3. Извлекаем код из README.md и раскладываем по файлам
-          # Этот скрипт найдет блоки кода в вашем README и запишет их куда нужно
-          python3 -c "
-          import os, re
-          with open('README.md', 'r', encoding='utf-8') as f:
-              content = f.read()
-          
-          # Ищем блоки кода с путями в формате 'Файл: путь' или из вашей таблицы
-          # Для надежности мы сейчас подготовим автогенератор ниже
-          "
+          # Регулярний вираз для пошуку блоків: ### `шлях` і наступний блок коду ```...```
+          pattern = r"###\s+`([^`]+)`\s*\n\s*```[a-zA-Z]*\n([\s\S]*?)\n```"
+          matches = re.findall(pattern, text)
+
+          for file_path, code in matches:
+              file_path = file_path.strip()
+              code = code.strip()
+              
+              # Розумне визначення куди покласти файл
+              if file_path.endswith(".kt") and not file_path.startswith("app/"):
+                  # Якщо це Kotlin файл без префікса, будуємо правильний Android-шлях
+                  full_path = f"app/src/main/java/com/example/audioplayer/{file_path}"
+              elif file_path == "AndroidManifest.xml":
+                  full_path = "app/src/main/AndroidManifest.xml"
+              else:
+                  # Залишаємо як є для settings.gradle.kts, build.gradle.kts тощо
+                  full_path = file_path
+
+              # Створюємо потрібні папки
+              os.makedirs(os.path.dirname(full_path), exist_ok=True)
+              
+              # Записуємо код у файл
+              with open(full_path, "w", encoding="utf-8") as out_f:
+                  out_f.write(code + "\n")
+                  print(f"Створено файл: {full_path}")
+
+          # Окремо завантажуємо офіційний gradlew, щоб він точно був правильним
+          os.makedirs("gradle/wrapper", exist_ok=True)
+          import urllib.request
+          urllib.request.urlretrieve("https://githubusercontent.com", "gradlew")
           
       - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@://github.com"
+          chmod +x gradlew
           git add .
-          git commit -m "Автоматическая генерация структуры проекта" || exit 0
+          git commit -m "Автоматична генерація структури проекту з README.md" || exit 0
           git push origin main
