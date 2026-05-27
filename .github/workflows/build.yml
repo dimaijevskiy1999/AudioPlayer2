@@ -1,16 +1,13 @@
 name: Build Debug APK
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -18,14 +15,18 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      # ЭТОТ ШАГ СКАЧАЕТ СВЕЖИЙ GRADLEW НАПРЯМУЮ, ЕСЛИ ЕГО НЕТ
+      - name: Download Gradle Wrapper Script
+        run: |
+          curl -sL "https://githubusercontent.com" -o gradlew
+          chmod +x gradlew
 
-      - name: Build Debug APK
+      - name: Build with Gradle
         run: ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: AudioPlayer-Debug
