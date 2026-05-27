@@ -20,7 +20,6 @@ jobs:
           import re
           import urllib.request
 
-          # 1. Читаем README.md и создаем файлы кода
           with open("README.md", "r", encoding="utf-8") as f:
               text = f.read()
 
@@ -30,8 +29,14 @@ jobs:
           for file_path, code in matches:
               file_path = file_path.strip()
               code = code.strip()
+              
               if not file_path or len(file_path) < 2:
                   continue
+              
+              # ИГНОРИРУЕМ ФАЙЛ СБОРКИ (создадим его вручную для обхода защиты)
+              if "build.yml" in file_path or "workflows" in file_path:
+                  continue
+                  
               if file_path.endswith(".kt") and not file_path.startswith("app/"):
                   full_path = f"app/src/main/java/com/example/audioplayer/{file_path}"
               elif "AndroidManifest.xml" in file_path:
@@ -45,7 +50,6 @@ jobs:
               with open(full_path, "w", encoding="utf-8") as out_f:
                   out_f.write(code + "\n")
 
-          # 2. Скачиваем скрипт gradlew силами Python без использования curl
           os.makedirs("gradle/wrapper", exist_ok=True)
           gradlew_url = "https://githubusercontent.com"
           try:
@@ -53,14 +57,13 @@ jobs:
                   gradlew_code = response.read().decode('utf-8')
               with open("gradlew", "w", encoding="utf-8", newline='\n') as f:
                   f.write(gradlew_code)
-              print("Файл gradlew успешно скачан через Python.")
           except Exception as e:
-              print(f"Не удалось скачать gradlew: {e}")
+              print(f"Ошибка: {e}")
 
       - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.email "github-actions[bot]@://github.com"
           chmod +x gradlew || true
           git add .
           git commit -m "Автоматическая генерация структуры проекта" || exit 0
