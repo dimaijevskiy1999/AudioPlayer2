@@ -16,10 +16,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Цей крок створює конфігурацію БЕЗ Jetifier, щоб сервер не чіпав лапки в маніфестах
+      # Жорстке видалення та генерація конфігурацій з виправленням кодування Linux
       - name: Force Fix Android Configuration
         run: |
-          rm -f build.gradle.kts settings.gradle.kts app/build.gradle.kts app/src/main/AndroidManifest.xml gradle.properties
+          rm -rf build.gradle.kts settings.gradle.kts app/build.gradle.kts app/src/main/AndroidManifest.xml gradle.properties
           
           # 1. Створюємо settings.gradle.kts
           cat << 'EOF' > settings.gradle.kts
@@ -37,10 +37,11 @@ jobs:
           }
           EOF
 
-          # 3. ВИМИКАЄМО JETIFIER (Він більше не буде ламати атрибути name!)
+          # 3. Вимикаємо Jetifier та увімкнюємо ізоляцію ресурсів
           cat << 'EOF' > gradle.properties
           android.useAndroidX=true
           android.enableJetifier=false
+          android.defaults.buildfeatures.buildconfig=true
           EOF
 
           # 4. Створюємо внутрішній app/build.gradle.kts
@@ -69,28 +70,29 @@ jobs:
           }
           EOF
 
-          # 5. Створюємо чистий AndroidManifest.xml
+      # ЕКСТРЕНА ПРИМУСОВА ГЕНЕРАЦІЯ ЧИСТОГО XML БЕЗ СИМВОЛІВ ФОРМАТУВАННЯ
+      - name: Overwrite Manifest Binary
+        run: |
           mkdir -p app/src/main
-          cat << 'EOF' > app/src/main/AndroidManifest.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://github.com">
-              <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-              <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-              <application android:allowBackup="true" android:label="AudioPlayer" android:supportsRtl="true" android:theme="@android:style/Theme.Material.NoActionBar">
-                  <activity android:name="com.example.audioplayer.MainActivity" android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-                  <service android:name="com.example.audioplayer.PlaybackService" android:foregroundServiceType="mediaPlayback" android:exported="false">
-                      <intent-filter>
-                          <action android:name="androidx.media3.session.MediaSessionService" />
-                      </intent-filter>
-                  </service>
-              </application>
-          </manifest>
-          EOF
+          printf '%s\n' \
+          '<?xml version="1.0" encoding="utf-8"?>' \
+          '<manifest xmlns:android="http://github.com">' \
+          '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />' \
+          '    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />' \
+          '    <application android:allowBackup="true" android:label="AudioPlayer" android:supportsRtl="true" android:theme="@android:style/Theme.Material.NoActionBar">' \
+          '        <activity android:name="com.example.audioplayer.MainActivity" android:exported="true">' \
+          '            <intent-filter>' \
+          '                <action android:name="android.intent.action.MAIN" />' \
+          '                <category android:name="android.intent.category.LAUNCHER" />' \
+          '            </intent-filter>' \
+          '        </activity>' \
+          '        <service android:name="com.example.audioplayer.PlaybackService" android:foregroundServiceType="mediaPlayback" android:exported="false">' \
+          '            <intent-filter>' \
+          '                <action android:name="androidx.media3.session.MediaSessionService" />' \
+          '            </intent-filter>' \
+          '        </service>' \
+          '    </application>' \
+          '</manifest>' > app/src/main/AndroidManifest.xml
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -98,10 +100,4 @@ jobs:
           gradle-version: '8.4'
 
       - name: Assemble Debug APK
-        run: gradle assembleDebug
-
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: AudioPlayer-Debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+        run: gradle assembleDebug --no-daemon
