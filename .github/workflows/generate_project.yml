@@ -42,11 +42,12 @@ jobs:
               with open(full_path, "w", encoding="utf-8") as out_f:
                   out_f.write(code + "\n")
 
-      - name: Download Gradle Wrapper Script
+      -      - name: Download Gradle Wrapper Script
         run: |
           mkdir -p gradle/wrapper
-          curl -sL https://githubusercontent.com -o gradlew
+          curl -sL "https://githubusercontent.com" -o gradlew
           chmod +x gradlew
+
 
       - name: Commit and Push changes
         run: |
