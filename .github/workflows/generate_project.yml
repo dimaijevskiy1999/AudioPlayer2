@@ -1,6 +1,6 @@
 name: Generate AudioPlayer Project
 on:
-  workflow_dispatch: # Дозволяє запустити генерацію вручную кнопкой
+  workflow_dispatch:
 
 jobs:
   generate:
@@ -15,11 +15,10 @@ jobs:
           import os
           import re
 
-          # Читаємо ваш README.md
           with open("README.md", "r", encoding="utf-8") as f:
               text = f.read()
 
-          # Регулярний вираз для пошуку блоків: ### `шлях` і наступний блок коду ```...```
+          # Находим все блоки заголовков и кодов
           pattern = r"###\s+`([^`]+)`\s*\n\s*```[a-zA-Z]*\n([\s\S]*?)\n```"
           matches = re.findall(pattern, text)
 
@@ -27,34 +26,44 @@ jobs:
               file_path = file_path.strip()
               code = code.strip()
               
-              # Розумне визначення куди покласти файл
+              # Проверяем, что путь не пустой и не содержит странных символов
+              if not file_path or len(file_path) < 2:
+                  continue
+                  
+              # Умное распределение путей для Android
               if file_path.endswith(".kt") and not file_path.startswith("app/"):
-                  # Якщо це Kotlin файл без префікса, будуємо правильний Android-шлях
                   full_path = f"app/src/main/java/com/example/audioplayer/{file_path}"
-              elif file_path == "AndroidManifest.xml":
+              elif "AndroidManifest.xml" in file_path:
                   full_path = "app/src/main/AndroidManifest.xml"
               else:
-                  # Залишаємо як є для settings.gradle.kts, build.gradle.kts тощо
                   full_path = file_path
 
-              # Створюємо потрібні папки
-              os.makedirs(os.path.dirname(full_path), exist_ok=True)
+              # Безопасное создание папок
+              dir_name = os.path.dirname(full_path)
+              if dir_name:
+                  os.makedirs(dir_name, exist_ok=True)
               
-              # Записуємо код у файл
-              with open(full_path, "w", encoding="utf-8") as out_f:
-                  out_f.write(code + "\n")
-                  print(f"Створено файл: {full_path}")
+              # Записываем файл
+              try:
+                  with open(full_path, "w", encoding="utf-8") as out_f:
+                      out_f.write(code + "\n")
+                  print(f"Успешно создан: {full_path}")
+              except Exception as e:
+                  print(f"Пропущен некорректный путь {full_path}: {e}")
 
-          # Окремо завантажуємо офіційний gradlew, щоб він точно був правильним
+          # Скачиваем официальный gradlew
           os.makedirs("gradle/wrapper", exist_ok=True)
           import urllib.request
-          urllib.request.urlretrieve("https://githubusercontent.com", "gradlew")
+          try:
+              urllib.request.urlretrieve("https://githubusercontent.com", "gradlew")
+          except Exception as e:
+              print(f"Ошибка скачивания gradlew: {e}")
           
       - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@://github.com"
-          chmod +x gradlew
+          chmod +x gradlew || true
           git add .
-          git commit -m "Автоматична генерація структури проекту з README.md" || exit 0
+          git commit -m "Автоматическая генерация структуры проекта" || exit 0
           git push origin main
