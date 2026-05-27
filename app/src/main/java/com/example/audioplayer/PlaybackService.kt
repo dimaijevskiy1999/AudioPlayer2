@@ -29,7 +29,8 @@ class PlaybackService : MediaSessionService() {
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(audioAttributes, true)
             .setHandleAudioBecomingNoisy(true)
-            .setHandleWakeLock(true)
+            // FIXED: В Media3 1.3.0 используется setWakeMode вместо setHandleWakeLock
+            .setWakeMode(C.WAKE_MODE_LOCAL)
             .setSeekBackIncrementMs(10_000)
             .setSeekForwardIncrementMs(10_000)
             .build()
