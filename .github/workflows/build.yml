@@ -15,22 +15,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
-      # Створюємо Gradle Wrapper 8.4 у системній папці /tmp, де немає жодних Android-файлів
-      - name: Force Create Local Gradle Wrapper
-        run: |
-          mkdir /tmp/wrapper_generation
-          cd /tmp/wrapper_generation
-          gradle wrapper --gradle-version 8.4 --distribution-type bin
-          cd $GITHUB_WORKSPACE
-          cp /tmp/wrapper_generation/gradlew .
-          cp -r /tmp/wrapper_generation/gradle .
-          chmod +x gradlew
-          rm -rf /tmp/wrapper_generation
-
-      - name: Build with Gradle
-        run: ./gradlew assembleDebug
+      # Официальный плагин от GitHub: сам скачает Gradle 8.4 и выполнит команду сборки
+      - name: Setup and Run Gradle 8.4
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.4'
+          arguments: assembleDebug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
