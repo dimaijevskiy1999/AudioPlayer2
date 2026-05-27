@@ -16,11 +16,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Жорстке видалення та генерація конфігурацій з виправленням кодування Linux
-      - name: Force Fix Android Configuration
+      # Повне вичищення папок перед стартом для блокування фантомного кешу
+      - name: Deep Clean Workspace
         run: |
           rm -rf build.gradle.kts settings.gradle.kts app/build.gradle.kts app/src/main/AndroidManifest.xml gradle.properties
-          
+          rm -rf .gradle .github/workflows/generate_project.yml
+
+      - name: Force Fix Android Configuration
+        run: |
           # 1. Створюємо settings.gradle.kts
           cat << 'EOF' > settings.gradle.kts
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
@@ -29,7 +32,7 @@ jobs:
           include(":app")
           EOF
 
-          # 2. Створюємо кореневий build.gradle.kts
+          # 2. Створюємо build.gradle.kts
           cat << 'EOF' > build.gradle.kts
           plugins {
               id("com.android.application") version "8.2.2" apply false
@@ -37,11 +40,11 @@ jobs:
           }
           EOF
 
-          # 3. Вимикаємо Jetifier та увімкнюємо ізоляцію ресурсів
+          # 3. Вимикаємо кешування і Jetifier
           cat << 'EOF' > gradle.properties
           android.useAndroidX=true
           android.enableJetifier=false
-          android.defaults.buildfeatures.buildconfig=true
+          org.gradle.caching=false
           EOF
 
           # 4. Створюємо внутрішній app/build.gradle.kts
@@ -70,7 +73,6 @@ jobs:
           }
           EOF
 
-      # ЕКСТРЕНА ПРИМУСОВА ГЕНЕРАЦІЯ ЧИСТОГО XML БЕЗ СИМВОЛІВ ФОРМАТУВАННЯ
       - name: Overwrite Manifest Binary
         run: |
           mkdir -p app/src/main
@@ -94,10 +96,13 @@ jobs:
           '    </application>' \
           '</manifest>' > app/src/main/AndroidManifest.xml
 
+      # ПРИМУСОВО ВИМИКАЄМО КЕШ НА РІВНІ ПЛАГІНУ GITHUB
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.4'
+          cache-disabled: true
 
+      # Запускаємо чисту збірку з повним ігноруванням локальних кешів
       - name: Assemble Debug APK
-        run: gradle assembleDebug --no-daemon
+        run: gradle assembleDebug --no-daemon --no-build-cache
