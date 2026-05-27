@@ -16,7 +16,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # Повне вичищення папок перед стартом
+      # Повне вичищення робочої папки
       - name: Deep Clean Workspace
         run: |
           rm -rf .gradle app/build buildsettings.gradle.kts build.gradle.kts settings.gradle.kts app/build.gradle.kts app/src/main/AndroidManifest.xml gradle.properties
@@ -73,11 +73,33 @@ jobs:
           }
           EOF
 
-      # БЕЗПЕЧНЕ ЗАВАНТАЖЕННЯ ЧИСТОГО МАНІФЕСТУ БЕЗ ВНУТРІШНІХ КОНФЛІКТІВ GITHUB ACTIONS
-      - name: Download Untouched Clean Manifest
+      # АВТОНОМНИЙ ЗАПИС МАНІФЕСТУ ЧЕРЕЗ PYTHON (БЕЗ ІНТЕРНЕТУ ТА БЕЗ КОНФЛІКТІВ СИМВОЛІВ)
+      - name: Generate Manifest via Python
+        shell: python
         run: |
-          mkdir -p app/src/main
-          curl -sL "https://githubusercontent.com" -o app/src/main/AndroidManifest.xml
+          import os
+          os.makedirs("app/src/main", exist_ok=True)
+          manifest_content = """<?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://github.com">
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+              <application android:allowBackup="true" android:label="AudioPlayer" android:supportsRtl="true" android:theme="@android:style/Theme.Material.NoActionBar">
+                  <activity android:name="com.example.audioplayer.MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+                  <service android:name="com.example.audioplayer.PlaybackService" android:foregroundServiceType="mediaPlayback" android:exported="false">
+                      <intent-filter>
+                          <action android:name="androidx.media3.session.MediaSessionService" />
+                      </intent-filter>
+                  </service>
+              </application>
+          </manifest>
+          """
+          with open("app/src/main/AndroidManifest.xml", "w", encoding="utf-8") as f:
+              f.write(manifest_content.strip())
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
