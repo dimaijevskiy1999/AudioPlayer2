@@ -16,10 +16,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # ПОВНЕ ВИПАЛЮВАННЯ КЕШУ КОМПІЛЯТОРА ТА СТАРИХ СКЛЕЄНИХ ФАЙЛІВ
       - name: Deep Clean Workspace
         run: |
-          rm -rf build.gradle.kts settings.gradle.kts app/build.gradle.kts app/src/main/AndroidManifest.xml gradle.properties
-          rm -rf .gradle .github/workflows/generate_project.yml
+          rm -rf .gradle app/build buildsettings.gradle.kts build.gradle.kts settings.gradle.kts app/build.gradle.kts app/src/main/AndroidManifest.xml gradle.properties
+          rm -rf .github/workflows/generate_project.yml
 
       - name: Force Fix Android Configuration
         run: |
@@ -46,7 +47,7 @@ jobs:
           org.gradle.caching=false
           EOF
 
-          # 4. Створюємо внутрішній app/build.gradle.kts (БЕЗ поламаних коментарів!)
+          # 4. Створюємо внутрішній app/build.gradle.kts
           cat << 'EOF' > app/build.gradle.kts
           plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
           android {
