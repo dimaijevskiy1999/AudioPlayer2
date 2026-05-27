@@ -1,9 +1,10 @@
 name: Generate AudioPlayer Project
+
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write # Гарантирует права на запись файлов прямо из скрипта
+  contents: write
 
 jobs:
   generate:
@@ -42,17 +43,16 @@ jobs:
               with open(full_path, "w", encoding="utf-8") as out_f:
                   out_f.write(code + "\n")
 
-      -      - name: Download Gradle Wrapper Script
+      - name: Download Gradle Wrapper Script
         run: |
           mkdir -p gradle/wrapper
           curl -sL "https://githubusercontent.com" -o gradlew
           chmod +x gradlew
 
-
       - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@://github.com"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -m "Автоматическая генерация структуры проекта" || exit 0
           git push origin main
